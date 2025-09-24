@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WeatherSphere - Real-time Weather Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-image: url('https://images.unsplash.com/photo-1513002749550-c59d786b8e6c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1974&q=80');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            min-height: 100vh;
+            transition: background-image 0.5s ease;
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
+        }
+        
+        .weather-icon {
+            filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.7));
+            transition: all 0.3s ease;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #3b82f6;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .search-input:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+        }
+        
+        .aqi-good { background-color: rgba(0, 200, 83, 0.7); }
+        .aqi-moderate { background-color: rgba(255, 171, 0, 0.7); }
+        .aqi-unhealthy { background-color: rgba(244, 67, 54, 0.7); }
+        .aqi-very-unhealthy { background-color: rgba(156, 39, 176, 0.7); }
+        .aqi-hazardous { background-color: rgba(126, 87, 194, 0.7); }
+    </style>
+</head>
+<body class="text-white">
+    <div class="container mx-auto px-4 py-8 min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold mb-2">WeatherSphere</h1>
+            <p class="text-lg opacity-80">Real-time weather insights at your fingertips</p>
+        </header>
+        
+        <!-- Search Bar -->
+        <div class="flex justify-center mb-8">
+            <div class="relative w-full max-w-md">
+                <input 
+                    type="text" 
+                    id="cityInput" 
+                    placeholder="Search Indian cities (e.g. Mumbai, Delhi)" 
+                    class="w-full py-3 px-6 pr-12 rounded-full bg-white bg-opacity-20 border border-white border-opacity-30 text-white placeholder-white placeholder-opacity-70 focus:bg-opacity-30 transition-all duration-300 search-input"
+                    value="Delhi"
+                >
+                <button 
+                    id="searchBtn" 
+                    class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-full transition-all duration-300"
+                >
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Main Weather Display -->
+        <div class="flex-grow flex flex-col items-center justify-center">
+            <div id="weatherContainer" class="w-full max-w-4xl">
+                <!-- Weather data will be inserted here -->
+            </div>
+            
+            <div id="loadingSpinner" class="hidden">
+                <div class="spinner"></div>
+                <p class="mt-4 text-lg">Fetching weather data...</p>
+            </div>
+            
+            <div id="errorMessage" class="hidden glass-card p-6 max-w-md text-center">
+                <i class="fas fa-exclamation-triangle text-4xl mb-4 text-red-400"></i>
+                <h3 class="text-xl font-semibold mb-2">City Not Found</h3>
+                <p>We couldn't find weather data for that location in India. Please try another Indian city name.</p>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <footer class="mt-8 text-center text-sm opacity-70">
+            <p>Powered by WeatherAPI.com | &copy; 2023 WeatherSphere</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const cityInput = document.getElementById('cityInput');
+            const searchBtn = document.getElementById('searchBtn');
+            const weatherContainer = document.getElementById('weatherContainer');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const errorMessage = document.getElementById('errorMessage');
+            
+            // Initial load with Delhi as default
+            fetchWeatherData('Delhi');
+            
+            // Search button click event
+            searchBtn.addEventListener('click', function() {
+                const city = cityInput.value.trim();
+                if (city) {
+                    fetchWeatherData(city);
+                }
+            });
+            
+            // Enter key press in input field
+            cityInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    const city = cityInput.value.trim();
+                    if (city) {
+                        fetchWeatherData(city);
+                    }
+                }
+            });
+            
+            function fetchWeatherData(city) {
+                // Show loading spinner
+                weatherContainer.classList.add('hidden');
+                errorMessage.classList.add('hidden');
+                loadingSpinner.classList.remove('hidden');
+                
+                const apiKey = '197686fd0a3940148f140532251207';
+                const url = `https://api.weatherapi.com/v1/current.json?key=${apiKey}&q=${city},India&aqi=yes`;
+                
+                fetch(url)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('City not found');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        displayWeatherData(data);
+                        updateBackground(data.current.condition.text);
+                    })
+                    .catch(error => {
+                        console.error('Error fetching weather data:', error);
+                        showError();
+                    })
+                    .finally(() => {
+                        loadingSpinner.classList.add('hidden');
+                    });
+            }
+            
+            function displayWeatherData(data) {
+                const { location, current } = data;
+                
+                // Determine AQI class based on air quality
+                let aqiClass = '';
+                const aqi = current.air_quality['us-epa-index'];
+                if (aqi <= 1) aqiClass = 'aqi-good';
+                else if (aqi <= 2) aqiClass = 'aqi-moderate';
+                else if (aqi <= 3) aqiClass = 'aqi-unhealthy';
+                else if (aqi <= 4) aqiClass = 'aqi-very-unhealthy';
+                else aqiClass = 'aqi-hazardous';
+                
+                // Get appropriate weather icon
+                const weatherIcon = getWeatherIcon(current.condition.code, current.is_day);
+                
+                // Format local time
+                const localTime = new Date(location.localtime);
+                const formattedTime = localTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const formattedDate = localTime.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' });
+                
+                // Create weather HTML
+                const weatherHTML = `
+                    <div class="glass-card p-8 mb-6">
+                        <div class="flex flex-col md:flex-row justify-between items-center mb-6">
+                            <div>
+                                <h2 class="text-3xl font-bold">${location.name}, ${location.country}</h2>
+                                <p class="text-lg opacity-80">${formattedDate} • ${formattedTime}</p>
+                            </div>
+                            <div class="mt-4 md:mt-0 text-center">
+                                <div class="flex items-center justify-center">
+                                    <img src="${weatherIcon}" alt="${current.condition.text}" class="weather-icon w-16 h-16 mr-4">
+                                    <span class="text-5xl font-light">${current.temp_c}°C</span>
+                                </div>
+                                <p class="text-xl mt-2">${current.condition.text}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="glass-card p-4 rounded-xl text-center">
+                                <div class="flex items-center justify-center mb-2">
+                                    <i class="fas fa-wind text-xl mr-2"></i>
+                                    <span class="text-lg">Wind</span>
+                                </div>
+                                <p class="text-2xl font-semibold">${current.wind_kph} km/h</p>
+                                <p class="text-sm opacity-80">${current.wind_dir}</p>
+                            </div>
+                            
+                            <div class="glass-card p-4 rounded-xl text-center">
+                                <div class="flex items-center justify-center mb-2">
+                                    <i class="fas fa-tint text-xl mr-2"></i>
+                                    <span class="text-lg">Humidity</span>
+                                </div>
+                                <p class="text-2xl font-semibold">${current.humidity}%</p>
+                                <p class="text-sm opacity-80">${getHumidityDescription(current.humidity)}</p>
+                            </div>
+                            
+                            <div class="glass-card p-4 rounded-xl text-center ${aqiClass}">
+                                <div class="flex items-center justify-center mb-2">
+                                    <i class="fas fa-smog text-xl mr-2"></i>
+                                    <span class="text-lg">Air Quality</span>
+                                </div>
+                                <p class="text-2xl font-semibold">${getAirQualityText(current.air_quality['us-epa-index'])}</p>
+                                <p class="text-sm">${getAQIDescription(current.air_quality['us-epa-index'])}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div class="glass-card p-3 rounded-lg text-center">
+                                <p class="text-sm opacity-80">Feels Like</p>
+                                <p class="text-xl font-medium">${current.feelslike_c}°C</p>
+                            </div>
+                            <div class="glass-card p-3 rounded-lg text-center">
+                                <p class="text-sm opacity-80">Pressure</p>
+                                <p class="text-xl font-medium">${current.pressure_mb} hPa</p>
+                            </div>
+                            <div class="glass-card p-3 rounded-lg text-center">
+                                <p class="text-sm opacity-80">Precipitation</p>
+                                <p class="text-xl font-medium">${current.precip_mm} mm</p>
+                            </div>
+                            <div class="glass-card p-3 rounded-lg text-center">
+                                <p class="text-sm opacity-80">UV Index</p>
+                                <p class="text-xl font-medium">${current.uv}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                weatherContainer.innerHTML = weatherHTML;
+                weatherContainer.classList.remove('hidden');
+            }
+            
+            function showError() {
+                errorMessage.classList.remove('hidden');
+            }
+            
+            function updateBackground(weatherCondition) {
+                let bgImage = '';
+                
+                if (weatherCondition.toLowerCase().includes('sunny') || weatherCondition.toLowerCase().includes('clear')) {
+                    bgImage = 'https://images.unsplash.com/photo-1560258018-c7db7645254e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2089&q=80';
+                } else if (weatherCondition.toLowerCase().includes('cloud') || weatherCondition.toLowerCase().includes('overcast')) {
+                    bgImage = 'https://images.unsplash.com/photo-1513002749550-c59d786b8e6c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1974&q=80';
+                } else if (weatherCondition.toLowerCase().includes('rain') || weatherCondition.toLowerCase().includes('drizzle')) {
+                    bgImage = 'https://images.unsplash.com/photo-1534274988757-a28bf1a57c17?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80';
+                } else if (weatherCondition.toLowerCase().includes('snow') || weatherCondition.toLowerCase().includes('sleet')) {
+                    bgImage = 'https://images.unsplash.com/photo-1483728642387-6c3bdd6c93e5?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2076&q=80';
+                } else if (weatherCondition.toLowerCase().includes('fog') || weatherCondition.toLowerCase().includes('mist')) {
+                    bgImage = 'https://images.unsplash.com/photo-1509826062569-5f0a72a7309f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80';
+                } else {
+                    bgImage = 'https://images.unsplash.com/photo-1513002749550-c59d786b8e6c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1974&q=80';
+                }
+                
+                document.body.style.backgroundImage = `url('${bgImage}')`;
+            }
+            
+            function getWeatherIcon(code, isDay) {
+                // Simplified version - in a real app you'd map all weather codes
+                if (code === 1000) { // Clear
+                    return isDay ? 'https://cdn.weatherapi.com/weather/64x64/day/113.png' : 'https://cdn.weatherapi.com/weather/64x64/night/113.png';
+                } else if (code === 1003 || code === 1006 || code === 1009) { // Partly cloudy
+                    return isDay ? 'https://cdn.weatherapi.com/weather/64x64/day/116.png' : 'https://cdn.weatherapi.com/weather/64x64/night/116.png';
+                } else if (code === 1030 || code === 1135 || code === 1147) { // Fog/Mist
+                    return 'https://cdn.weatherapi.com/weather/64x64/day/248.png';
+                } else if (code >= 1063 && code <= 1201) { // Rain
+                    return 'https://cdn.weatherapi.com/weather/64x64/day/176.png';
+                } else if (code >= 1204 && code <= 1252) { // Snow
+                    return 'https://cdn.weatherapi.com/weather/64x64/day/179.png';
+                } else if (code >= 1240 && code <= 1264) { // Thunder
+                    return 'https://cdn.weatherapi.com/weather/64x64/day/200.png';
+                } else {
+                    return 'https://cdn.weatherapi.com/weather/64x64/day/113.png';
+                }
+            }
+            
+            function getHumidityDescription(humidity) {
+                if (humidity < 30) return 'Dry';
+                if (humidity < 60) return 'Comfortable';
+                if (humidity < 80) return 'Moderate';
+                return 'High';
+            }
+            
+            function getAirQualityText(aqi) {
+                switch(aqi) {
+                    case 1: return 'Good';
+                    case 2: return 'Moderate';
+                    case 3: return 'Unhealthy';
+                    case 4: return 'Very Unhealthy';
+                    case 5: return 'Hazardous';
+                    default: return 'Unknown';
+                }
+            }
+            
+            function getAQIDescription(aqi) {
+                switch(aqi) {
+                    case 1: return 'Air quality is satisfactory';
+                    case 2: return 'Acceptable quality';
+                    case 3: return 'Sensitive groups risk';
+                    case 4: return 'Health alert';
+                    case 5: return 'Health warnings';
+                    default: return 'Unknown air quality';
+                }
+            }
+        });
+    </script>
+</body>
+</html>
