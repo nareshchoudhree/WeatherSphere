@@ -1,111 +1,219 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WeatherSphere - Real-time Weather Dashboard</title>
+    <title>WeatherSphere - Ultra-Realistic Weather Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
-        
+
+        :root {
+            --bg-overlay: linear-gradient(180deg, rgba(0,0,0,0.3), rgba(0,0,0,0.5));
+            --text-color: #ffffff;
+            --card-bg: rgba(255, 255, 255, 0.1);
+            --input-bg: rgba(255, 255, 255, 0.15);
+            --input-border: rgba(255, 255, 255, 0.2);
+        }
+
+        [data-theme="dark"] {
+            --bg-overlay: linear-gradient(180deg, rgba(0,0,0,0.7), rgba(0,0,0,0.9));
+            --text-color: #e5e7eb;
+            --card-bg: rgba(30, 30, 30, 0.5);
+            --input-bg: rgba(50, 50, 50, 0.3);
+            --input-border: rgba(200, 200, 200, 0.3);
+        }
+
         body {
             font-family: 'Poppins', sans-serif;
-            background-image: url('https://images.unsplash.com/photo-1513002749550-c59d786b8e6c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1974&q=80');
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
             min-height: 100vh;
-            transition: background-image 0.5s ease;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow-x: hidden;
+            background-color: #1a1a1a; /* Fallback background */
+            color: var(--text-color);
         }
-        
-        .glass-card {
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.18);
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
-        }
-        
-        .weather-icon {
-            filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.7));
+
+        .weather-bg-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--bg-overlay);
+            z-index: -1;
             transition: all 0.3s ease;
         }
-        
+
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            transform: translateY(20px);
+            opacity: 0;
+            animation: slideIn 0.5s ease-out forwards;
+        }
+
+        @keyframes slideIn {
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .weather-icon {
+            filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.8));
+            transform: scale(1);
+            transition: transform 0.3s ease;
+        }
+
+        .weather-icon:hover {
+            transform: scale(1.1);
+        }
+
         .spinner {
-            width: 50px;
-            height: 50px;
-            border: 5px solid rgba(255, 255, 255, 0.3);
+            width: 60px;
+            height: 60px;
+            border: 6px solid rgba(255, 255, 255, 0.3);
             border-radius: 50%;
             border-top-color: #3b82f6;
-            animation: spin 1s ease-in-out infinite;
+            animation: spin 0.8s ease-in-out infinite;
         }
-        
+
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
-        
+
+        .search-input {
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+        }
+
         .search-input:focus {
             outline: none;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.4);
+            background: var(--input-bg);
         }
-        
-        .aqi-good { background-color: rgba(0, 200, 83, 0.7); }
-        .aqi-moderate { background-color: rgba(255, 171, 0, 0.7); }
-        .aqi-unhealthy { background-color: rgba(244, 67, 54, 0.7); }
-        .aqi-very-unhealthy { background-color: rgba(156, 39, 176, 0.7); }
-        .aqi-hazardous { background-color: rgba(126, 87, 194, 0.7); }
+
+        .aqi-good { background-color: rgba(0, 200, 83, 0.8); }
+        .aqi-moderate { background-color: rgba(255, 171, 0, 0.8); }
+        .aqi-unhealthy { background-color: rgba(244, 67, 54, 0.8); }
+        .aqi-very-unhealthy { background-color: rgba(156, 39, 176, 0.8); }
+        .aqi-hazardous { background-color: rgba(126, 87, 194, 0.8); }
+
+        .weather-particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: fall 3s linear infinite;
+        }
+
+        @keyframes fall {
+            0% { transform: translateY(-100vh); opacity: 0.7; }
+            100% { transform: translateY(100vh); opacity: 0; }
+        }
+
+        .history-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .history-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 1000;
+        }
+
+        .forecast-toggle button.active {
+            background-image: linear-gradient(to right, #3b82f6, #9333ea);
+        }
     </style>
 </head>
-<body class="text-white">
+<body>
+    <button class="theme-toggle bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white p-3 rounded-full transition-all duration-300" onclick="toggleTheme()">
+        <i class="fas fa-moon"></i>
+    </button>
+
+    <div class="weather-bg-overlay"></div>
     <div class="container mx-auto px-4 py-8 min-h-screen flex flex-col">
         <!-- Header -->
         <header class="text-center mb-8">
-            <h1 class="text-4xl font-bold mb-2">WeatherSphere</h1>
-            <p class="text-lg opacity-80">Real-time weather insights at your fingertips</p>
+            <h1 class="text-5xl font-bold mb-3 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">WeatherSphere</h1>
+            <p class="text-xl opacity-80">Immersive Weather Insights</p>
         </header>
-        
+
         <!-- Search Bar -->
-        <div class="flex justify-center mb-8">
-            <div class="relative w-full max-w-md">
+        <div class="flex justify-center mb-10 items-center gap-4">
+            <div class="relative w-full max-w-lg">
                 <input 
                     type="text" 
                     id="cityInput" 
                     placeholder="Search Indian cities (e.g. Mumbai, Delhi)" 
-                    class="w-full py-3 px-6 pr-12 rounded-full bg-white bg-opacity-20 border border-white border-opacity-30 text-white placeholder-white placeholder-opacity-70 focus:bg-opacity-30 transition-all duration-300 search-input"
+                    class="w-full py-4 px-6 pr-14 rounded-full search-input text-white placeholder-white placeholder-opacity-60 focus:bg-opacity-25 transition-all duration-300"
                     value="Delhi"
                 >
                 <button 
                     id="searchBtn" 
-                    class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-full transition-all duration-300"
+                    class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white p-3 rounded-full transition-all duration-300"
                 >
                     <i class="fas fa-search"></i>
                 </button>
             </div>
+            <button 
+                id="locationBtn" 
+                class="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white p-3 rounded-full transition-all duration-300"
+            >
+                <i class="fas fa-location-arrow"></i>
+            </button>
         </div>
-        
+
+        <!-- Forecast Toggle -->
+      <!--   <div class="flex justify-center mb-6">
+            <div class="bg-white bg-opacity-15 rounded-full p-1 flex gap-2 forecast-toggle">
+                <button id="fiveDayBtn" class="px-4 py-2 rounded-full text-white hover:bg-white hover:bg-opacity-20">5-Day Forecast</button>
+                <button id="sevenDayBtn" class="px-4 py-2 rounded-full active text-white">7-Day Forecast</button>
+            </div>
+        </div>
+        -->
+
         <!-- Main Weather Display -->
         <div class="flex-grow flex flex-col items-center justify-center">
-            <div id="weatherContainer" class="w-full max-w-4xl">
+            <div id="weatherContainer" class="w-full max-w-5xl">
                 <!-- Weather data will be inserted here -->
             </div>
-            
-            <div id="loadingSpinner" class="hidden">
+
+            <div id="historyContainer" class="w-full max-w-5xl mt-8">
+                <!-- Historical weather data will be inserted here -->
+            </div>
+
+            <div id="loadingSpinner" class="hidden flex flex-col items-center">
                 <div class="spinner"></div>
                 <p class="mt-4 text-lg">Fetching weather data...</p>
             </div>
-            
-            <div id="errorMessage" class="hidden glass-card p-6 max-w-md text-center">
-                <i class="fas fa-exclamation-triangle text-4xl mb-4 text-red-400"></i>
-                <h3 class="text-xl font-semibold mb-2">City Not Found</h3>
+
+            <div id="errorMessage" class="hidden glass-card p-8 max-w-md text-center">
+                <i class="fas fa-exclamation-triangle text-5xl mb-4 text-red-400"></i>
+                <h3 class="text-2xl font-semibold mb-3">City Not Found</h3>
                 <p>We couldn't find weather data for that location in India. Please try another Indian city name.</p>
             </div>
         </div>
-        
+
         <!-- Footer -->
-        <footer class="mt-8 text-center text-sm opacity-70">
-            <p>Powered by WeatherAPI.com | &copy; 2023 WeatherSphere</p>
+        <footer class="mt-12 text-center text-sm opacity-70">
+            <p>Powered by WeatherAPI.com | © 2025 WeatherSphere</p>
         </footer>
     </div>
 
@@ -113,13 +221,52 @@
         document.addEventListener('DOMContentLoaded', function() {
             const cityInput = document.getElementById('cityInput');
             const searchBtn = document.getElementById('searchBtn');
+            const locationBtn = document.getElementById('locationBtn');
             const weatherContainer = document.getElementById('weatherContainer');
+            const historyContainer = document.getElementById('historyContainer');
             const loadingSpinner = document.getElementById('loadingSpinner');
             const errorMessage = document.getElementById('errorMessage');
+            const fiveDayBtn = document.getElementById('fiveDayBtn');
+            const sevenDayBtn = document.getElementById('sevenDayBtn');
+            let forecastDaysToShow = 3;
+
+            // Theme toggle
             
-            // Initial load with Delhi as default
-            fetchWeatherData('Delhi');
-            
+
+            // Apply theme styles
+            function updateThemeStyles(theme) {
+                const body = document.body;
+                const cards = document.querySelectorAll('.glass-card');
+                const input = document.querySelector('.search-input');
+                if (theme === 'dark') {
+                    body.style.backgroundColor = '#1a1a1a';
+                    cards.forEach(card => {
+                        card.style.background = 'rgba(30, 30, 30, 0.5)';
+                        card.style.border = '1px solid rgba(200, 200, 200, 0.3)';
+                    });
+                    input.style.background = 'rgba(50, 50, 50, 0.3)';
+                    input.style.border = '1px solid rgba(200, 200, 200, 0.3)';
+                } else {
+                    body.style.backgroundColor = '#ffffff'; // Maintain fallback
+                    
+                    cards.forEach(card => {
+                        card.style.background = 'rgba(255, 255, 255, 0.1)';
+                        card.style.border = '1px solid rgba(255, 255, 255, 0.15)';
+                    });
+                    input.style.background = 'rgba(255, 255, 255, 0.15)';
+                    input.style.border = '1px solid rgba(255, 255, 255, 0.2)';
+                }
+            }
+
+            // Load saved theme
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            document.querySelector('.theme-toggle i').className = `fas fa-${savedTheme === 'dark' ? 'sun' : 'moon'}`;
+            updateThemeStyles(savedTheme);
+
+            // Load weather for current location
+            getCurrentLocationWeather();
+
             // Search button click event
             searchBtn.addEventListener('click', function() {
                 const city = cityInput.value.trim();
@@ -127,7 +274,10 @@
                     fetchWeatherData(city);
                 }
             });
-            
+
+            // Location button click event
+            locationBtn.addEventListener('click', getCurrentLocationWeather);
+
             // Enter key press in input field
             cityInput.addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
@@ -137,40 +287,97 @@
                     }
                 }
             });
-            
-            function fetchWeatherData(city) {
-                // Show loading spinner
+
+            // Forecast toggle events
+            fiveDayBtn.addEventListener('click', () => {
+                forecastDaysToShow = 5;
+                fiveDayBtn.classList.add('active');
+                sevenDayBtn.classList.remove('active');
+                const city = cityInput.value.trim() || 'Delhi';
+                fetchWeatherData(city);
+            });
+
+            sevenDayBtn.addEventListener('click', () => {
+                forecastDaysToShow = 7;
+                sevenDayBtn.classList.add('active');
+                fiveDayBtn.classList.remove('active');
+                const city = cityInput.value.trim() || 'Delhi';
+                fetchWeatherData(city);
+            });
+
+            function getCurrentLocationWeather() {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        position => {
+                            const { latitude, longitude } = position.coords;
+                            fetchWeatherByCoords(latitude, longitude);
+                        },
+                        error => {
+                            console.error('Geolocation error:', error);
+                            fetchWeatherData('Delhi'); // Fallback to Delhi
+                        }
+                    );
+                } else {
+                    fetchWeatherData('Delhi'); // Fallback to Delhi
+                }
+            }
+
+            async function fetchWeatherByCoords(lat, lon) {
+                const apiKey = '197686fd0a3940148f140532251207';
+                const currentUrl = `https://api.weatherapi.com/v1/current.json?key=${apiKey}&q=${lat},${lon}&aqi=yes`;
+                const historyUrl = `https://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=${lat},${lon}&days=7&aqi=no&alerts=no`;
+
+                try {
+                    loadingSpinner.classList.remove('hidden');
+                    const [currentResponse, historyResponse] = await Promise.all([
+                        fetch(currentUrl).then(res => { if (!res.ok) throw new Error('Location not found'); return res.json(); }),
+                        fetch(historyUrl).then(res => { if (!res.ok) throw new Error('Location not found'); return res.json(); })
+                    ]);
+                    cityInput.value = currentResponse.location.name;
+                    displayWeatherData(currentResponse);
+                    displayHistoryData(historyResponse);
+                    updateBackground(currentResponse.current.condition.text);
+                    createWeatherParticles(currentResponse.current.condition.text);
+                    errorMessage.classList.add('hidden');
+                } catch (error) {
+                    console.error('Error fetching weather data:', error);
+                    showError();
+                } finally {
+                    loadingSpinner.classList.add('hidden');
+                }
+            }
+
+            async function fetchWeatherData(city) {
                 weatherContainer.classList.add('hidden');
+                historyContainer.classList.add('hidden');
                 errorMessage.classList.add('hidden');
                 loadingSpinner.classList.remove('hidden');
-                
+
                 const apiKey = '197686fd0a3940148f140532251207';
-                const url = `https://api.weatherapi.com/v1/current.json?key=${apiKey}&q=${city},India&aqi=yes`;
-                
-                fetch(url)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('City not found');
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        displayWeatherData(data);
-                        updateBackground(data.current.condition.text);
-                    })
-                    .catch(error => {
-                        console.error('Error fetching weather data:', error);
-                        showError();
-                    })
-                    .finally(() => {
-                        loadingSpinner.classList.add('hidden');
-                    });
+                const currentUrl = `https://api.weatherapi.com/v1/current.json?key=${apiKey}&q=${city},India&aqi=yes`;
+                const historyUrl = `https://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=${city},India&days=7&aqi=no&alerts=no`;
+
+                try {
+                    const [currentResponse, historyResponse] = await Promise.all([
+                        fetch(currentUrl).then(res => { if (!res.ok) throw new Error('City not found'); return res.json(); }),
+                        fetch(historyUrl).then(res => { if (!res.ok) throw new Error('City not found'); return res.json(); })
+                    ]);
+                    displayWeatherData(currentResponse);
+                    displayHistoryData(historyResponse);
+                    updateBackground(currentResponse.current.condition.text);
+                    createWeatherParticles(currentResponse.current.condition.text);
+                    errorMessage.classList.add('hidden');
+                } catch (error) {
+                    console.error('Error fetching weather data:', error);
+                    showError();
+                } finally {
+                    loadingSpinner.classList.add('hidden');
+                }
             }
-            
+
             function displayWeatherData(data) {
                 const { location, current } = data;
-                
-                // Determine AQI class based on air quality
+
                 let aqiClass = '';
                 const aqi = current.air_quality['us-epa-index'];
                 if (aqi <= 1) aqiClass = 'aqi-good';
@@ -178,136 +385,184 @@
                 else if (aqi <= 3) aqiClass = 'aqi-unhealthy';
                 else if (aqi <= 4) aqiClass = 'aqi-very-unhealthy';
                 else aqiClass = 'aqi-hazardous';
-                
-                // Get appropriate weather icon
+
                 const weatherIcon = getWeatherIcon(current.condition.code, current.is_day);
-                
-                // Format local time
+
                 const localTime = new Date(location.localtime);
                 const formattedTime = localTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                 const formattedDate = localTime.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' });
-                
-                // Create weather HTML
+
                 const weatherHTML = `
-                    <div class="glass-card p-8 mb-6">
-                        <div class="flex flex-col md:flex-row justify-between items-center mb-6">
+                    <div class="glass-card p-10 mb-8">
+                        <div class="flex flex-col md:flex-row justify-between items-center mb-8">
                             <div>
-                                <h2 class="text-3xl font-bold">${location.name}, ${location.country}</h2>
-                                <p class="text-lg opacity-80">${formattedDate} • ${formattedTime}</p>
+                                <h2 class="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-300 to-purple-400">${location.name}, ${location.country}</h2>
+                                <p class="text-xl opacity-80">${formattedDate} • ${formattedTime}</p>
                             </div>
-                            <div class="mt-4 md:mt-0 text-center">
+                            <div class="mt-6 md:mt-0 text-center">
                                 <div class="flex items-center justify-center">
-                                    <img src="${weatherIcon}" alt="${current.condition.text}" class="weather-icon w-16 h-16 mr-4">
-                                    <span class="text-5xl font-light">${current.temp_c}°C</span>
+                                    <img src="${weatherIcon}" alt="${current.condition.text}" class="weather-icon w-20 h-20 mr-4">
+                                    <span class="text-6xl font-light">${current.temp_c}°C</span>
                                 </div>
-                                <p class="text-xl mt-2">${current.condition.text}</p>
+                                <p class="text-2xl mt-3 font-medium">${current.condition.text}</p>
                             </div>
                         </div>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div class="glass-card p-4 rounded-xl text-center">
-                                <div class="flex items-center justify-center mb-2">
-                                    <i class="fas fa-wind text-xl mr-2"></i>
-                                    <span class="text-lg">Wind</span>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="glass-card p-6 rounded-xl text-center">
+                                <div class="flex items-center justify-center mb-3">
+                                    <i class="fas fa-wind text-2xl mr-2"></i>
+                                    <span class="text-xl">Wind</span>
                                 </div>
-                                <p class="text-2xl font-semibold">${current.wind_kph} km/h</p>
-                                <p class="text-sm opacity-80">${current.wind_dir}</p>
+                                <p class="text-3xl font-semibold">${current.wind_kph} km/h</p>
+                                <p class="text-base opacity-80">${current.wind_dir}</p>
                             </div>
-                            
-                            <div class="glass-card p-4 rounded-xl text-center">
-                                <div class="flex items-center justify-center mb-2">
-                                    <i class="fas fa-tint text-xl mr-2"></i>
-                                    <span class="text-lg">Humidity</span>
+
+                            <div class="glass-card p-6 rounded-xl text-center">
+                                <div class="flex items-center justify-center mb-3">
+                                    <i class="fas fa-tint text-2xl mr-2"></i>
+                                    <span class="text-xl">Humidity</span>
                                 </div>
-                                <p class="text-2xl font-semibold">${current.humidity}%</p>
-                                <p class="text-sm opacity-80">${getHumidityDescription(current.humidity)}</p>
+                                <p class="text-3xl font-semibold">${current.humidity}%</p>
+                                <p class="text-base opacity-80">${getHumidityDescription(current.humidity)}</p>
                             </div>
-                            
-                            <div class="glass-card p-4 rounded-xl text-center ${aqiClass}">
-                                <div class="flex items-center justify-center mb-2">
-                                    <i class="fas fa-smog text-xl mr-2"></i>
-                                    <span class="text-lg">Air Quality</span>
+
+                            <div class="glass-card p-6 rounded-xl text-center ${aqiClass}">
+                                <div class="flex items-center justify-center mb-3">
+                                    <i class="fas fa-smog text-2xl mr-2"></i>
+                                    <span class="text-xl">Air Quality</span>
                                 </div>
-                                <p class="text-2xl font-semibold">${getAirQualityText(current.air_quality['us-epa-index'])}</p>
-                                <p class="text-sm">${getAQIDescription(current.air_quality['us-epa-index'])}</p>
+                                <p class="text-3xl font-semibold">${getAirQualityText(current.air_quality['us-epa-index'])}</p>
+                                <p class="text-base">${getAQIDescription(current.air_quality['us-epa-index'])}</p>
                             </div>
                         </div>
-                        
-                        <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div class="glass-card p-3 rounded-lg text-center">
-                                <p class="text-sm opacity-80">Feels Like</p>
-                                <p class="text-xl font-medium">${current.feelslike_c}°C</p>
+
+                        <div class="mt-8 grid grid-cols-2 md:grid-cols-4 gap-6">
+                            <div class="glass-card p-4 rounded-lg text-center">
+                                <p class="text-base opacity-80">Feels Like</p>
+                                <p class="text-2xl font-medium">${current.feelslike_c}°C</p>
                             </div>
-                            <div class="glass-card p-3 rounded-lg text-center">
-                                <p class="text-sm opacity-80">Pressure</p>
-                                <p class="text-xl font-medium">${current.pressure_mb} hPa</p>
+                            <div class="glass-card p-4 rounded-lg text-center">
+                                <p class="text-base opacity-80">Pressure</p>
+                                <p class="text-2xl font-medium">${current.pressure_mb} hPa</p>
                             </div>
-                            <div class="glass-card p-3 rounded-lg text-center">
-                                <p class="text-sm opacity-80">Precipitation</p>
-                                <p class="text-xl font-medium">${current.precip_mm} mm</p>
+                            <div class="glass-card p-4 rounded-lg text-center">
+                                <p class="text-base opacity-80">Precipitation</p>
+                                <p class="text-2xl font-medium">${current.precip_mm} mm</p>
                             </div>
-                            <div class="glass-card p-3 rounded-lg text-center">
-                                <p class="text-sm opacity-80">UV Index</p>
-                                <p class="text-xl font-medium">${current.uv}</p>
+                            <div class="glass-card p-4 rounded-lg text-center">
+                                <p class="text-base opacity-80">UV Index</p>
+                                <p class="text-2xl font-medium">${current.uv}</p>
                             </div>
                         </div>
                     </div>
                 `;
-                
+
                 weatherContainer.innerHTML = weatherHTML;
                 weatherContainer.classList.remove('hidden');
             }
-            
+
+            function displayHistoryData(data) {
+                const forecastDays = data.forecast.forecastday.slice(0, forecastDaysToShow);
+                let historyHTML = `
+                    <h3 class="text-2xl font-semibold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-300 to-purple-400">${forecastDaysToShow}-Day Weather Forecast</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-${forecastDaysToShow === 5 ? '5' : '4'} gap-6">
+                `;
+
+                forecastDays.forEach(day => {
+                    const date = new Date(day.date);
+                    const formattedDate = date.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+                    const weatherIcon = getWeatherIcon(day.day.condition.code, 1);
+
+                    historyHTML += `
+                        <div class="glass-card p-6 rounded-xl text-center history-card">
+                            <p class="text-lg font-medium mb-2">${formattedDate}</p>
+                            <img src="${weatherIcon}" alt="${day.day.condition.text}" class="weather-icon w-12 h-12 mx-auto mb-3">
+                            <p class="text-xl font-semibold">${day.day.avgtemp_c}°C</p>
+                            <p class="text-base opacity-80">${day.day.condition.text}</p>
+                            <p class="text-sm mt-2">Max: ${day.day.maxtemp_c}°C</p>
+                            <p class="text-sm">Min: ${day.day.mintemp_c}°C</p>
+                            <p class="text-sm">Precip: ${day.day.totalprecip_mm} mm</p>
+                        </div>
+                    `;
+                });
+
+                historyHTML += `</div>`;
+                historyContainer.innerHTML = historyHTML;
+                historyContainer.classList.remove('hidden');
+            }
+
             function showError() {
                 errorMessage.classList.remove('hidden');
             }
-            
+
             function updateBackground(weatherCondition) {
                 let bgImage = '';
-                
-                if (weatherCondition.toLowerCase().includes('sunny') || weatherCondition.toLowerCase().includes('clear')) {
-                    bgImage = 'https://images.unsplash.com/photo-1560258018-c7db7645254e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2089&q=80';
-                } else if (weatherCondition.toLowerCase().includes('cloud') || weatherCondition.toLowerCase().includes('overcast')) {
-                    bgImage = 'https://images.unsplash.com/photo-1513002749550-c59d786b8e6c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1974&q=80';
-                } else if (weatherCondition.toLowerCase().includes('rain') || weatherCondition.toLowerCase().includes('drizzle')) {
-                    bgImage = 'https://images.unsplash.com/photo-1534274988757-a28bf1a57c17?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80';
-                } else if (weatherCondition.toLowerCase().includes('snow') || weatherCondition.toLowerCase().includes('sleet')) {
-                    bgImage = 'https://images.unsplash.com/photo-1483728642387-6c3bdd6c93e5?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2076&q=80';
-                } else if (weatherCondition.toLowerCase().includes('fog') || weatherCondition.toLowerCase().includes('mist')) {
-                    bgImage = 'https://images.unsplash.com/photo-1509826062569-5f0a72a7309f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80';
+                const condition = weatherCondition.toLowerCase();
+
+                if (condition.includes('sunny') || condition.includes('clear')) {
+                    bgImage = 'https://images.unsplash.com/photo-1560258018-c7db7645254e?ixlib=rb-4.0.3&auto=format&fit=crop&w=2089&q=80';
+                } else if (condition.includes('cloud') || condition.includes('overcast')) {
+                    bgImage = 'https://images.unsplash.com/photo-1513002749550-c59d786b8e6c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1974&q=80';
+                } else if (condition.includes('rain') || condition.includes('drizzle')) {
+                    bgImage = 'https://images.unsplash.com/photo-1534274988757-a28bf1a57c17?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80';
+                } else if (condition.includes('snow') || condition.includes('sleet')) {
+                    bgImage = 'https://images.unsplash.com/photo-1483728642387-6c3bdd6c93e5?ixlib=rb-4.0.3&auto=format&fit=crop&w=2076&q=80';
+                } else if (condition.includes('fog') || condition.includes('mist')) {
+                    bgImage = 'https://images.unsplash.com/photo-1509826062569-5f0a72a7309f?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80';
                 } else {
-                    bgImage = 'https://images.unsplash.com/photo-1513002749550-c59d786b8e6c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1974&q=80';
+                    bgImage = 'https://images.unsplash.com/photo-1513002749550-c59d786b8e6c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1974&q=80';
                 }
-                
+
                 document.body.style.backgroundImage = `url('${bgImage}')`;
             }
-            
+
+            function createWeatherParticles(weatherCondition) {
+                const existingParticles = document.querySelectorAll('.weather-particle');
+                existingParticles.forEach(particle => particle.remove());
+
+                const condition = weatherCondition.toLowerCase();
+                if (condition.includes('rain') || condition.includes('drizzle') || condition.includes('snow')) {
+                    const particleCount = condition.includes('snow') ? 50 : 100;
+                    for (let i = 0; i < particleCount; i++) {
+                        const particle = document.createElement('div');
+                        particle.className = 'weather-particle';
+                        particle.style.width = condition.includes('snow') ? '6px' : '2px';
+                        particle.style.height = condition.includes('snow') ? '6px' : '2px';
+                        particle.style.left = `${Math.random() * 100}vw`;
+                        particle.style.animationDelay = `${Math.random() * 3}s`;
+                        particle.style.animationDuration = `${2 + Math.random() * 2}s`;
+                        document.body.appendChild(particle);
+                        setTimeout(() => particle.remove(), 5000);
+                    }
+                }
+            }
+
             function getWeatherIcon(code, isDay) {
-                // Simplified version - in a real app you'd map all weather codes
-                if (code === 1000) { // Clear
+                if (code === 1000) {
                     return isDay ? 'https://cdn.weatherapi.com/weather/64x64/day/113.png' : 'https://cdn.weatherapi.com/weather/64x64/night/113.png';
-                } else if (code === 1003 || code === 1006 || code === 1009) { // Partly cloudy
+                } else if (code === 1003 || code === 1006 || code === 1009) {
                     return isDay ? 'https://cdn.weatherapi.com/weather/64x64/day/116.png' : 'https://cdn.weatherapi.com/weather/64x64/night/116.png';
-                } else if (code === 1030 || code === 1135 || code === 1147) { // Fog/Mist
+                } else if (code === 1030 || code === 1135 || code === 1147) {
                     return 'https://cdn.weatherapi.com/weather/64x64/day/248.png';
-                } else if (code >= 1063 && code <= 1201) { // Rain
+                } else if (code >= 1063 && code <= 1201) {
                     return 'https://cdn.weatherapi.com/weather/64x64/day/176.png';
-                } else if (code >= 1204 && code <= 1252) { // Snow
+                } else if (code >= 1204 && code <= 1252) {
                     return 'https://cdn.weatherapi.com/weather/64x64/day/179.png';
-                } else if (code >= 1240 && code <= 1264) { // Thunder
+                } else if (code >= 1240 && code <= 1264) {
                     return 'https://cdn.weatherapi.com/weather/64x64/day/200.png';
                 } else {
                     return 'https://cdn.weatherapi.com/weather/64x64/day/113.png';
                 }
             }
-            
+
             function getHumidityDescription(humidity) {
                 if (humidity < 30) return 'Dry';
                 if (humidity < 60) return 'Comfortable';
                 if (humidity < 80) return 'Moderate';
                 return 'High';
             }
-            
+
             function getAirQualityText(aqi) {
                 switch(aqi) {
                     case 1: return 'Good';
@@ -318,7 +573,7 @@
                     default: return 'Unknown';
                 }
             }
-            
+
             function getAQIDescription(aqi) {
                 switch(aqi) {
                     case 1: return 'Air quality is satisfactory';
@@ -330,6 +585,16 @@
                 }
             }
         });
+
+        function toggleTheme() {
+                const html = document.documentElement;
+                const currentTheme = html.getAttribute('data-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                html.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+                document.querySelector('.theme-toggle i').className = `fas fa-${newTheme === 'dark' ? 'sun' : 'moon'}`;
+                updateThemeStyles(newTheme);
+            }
     </script>
 </body>
 </html>
